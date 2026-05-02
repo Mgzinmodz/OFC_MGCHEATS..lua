@@ -1,152 +1,98 @@
--- MGZ MODS (CORRIGIDO)
-
-local settings = {
-    aimbot = false,
-    showFOV = false,
-    showAimLine = false,
-    noRecoil = false,
-    teamCheck = true,
-    silentAim = false,
-    fovRadius = 150,
-    accuracy = 100,
-    maxDistance = 300,
-    targetPart = "Head",
-
-    esp = false,
-    espLine = false,
-    espName = false,
-    espBox = false,
-    espSkeleton = false,
-    espHealth = false,
-
-    speedEnabled = false,
-    speedValue = 50,
-
-    invisible = false,
-    xray = false
-}
+-- MGZ MODS | UI BASE (ESBOÇO)
 
 local player = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local runService = game:GetService("RunService")
 
--- SAFE CHARACTER
-local function getCharacter(plr)
-    return plr.Character
-end
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "MGZ_MODS"
+gui.Parent = player:WaitForChild("PlayerGui")
 
--- ENEMIES
-local function getEnemies()
-    local t = {}
-    for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= player then
-            if not settings.teamCheck or v.Team ~= player.Team then
-                table.insert(t, v)
-            end
-        end
-    end
-    return t
-end
+-- MAIN FRAME
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 400, 0, 300)
+main.Position = UDim2.new(0.5, -200, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(25,25,35)
+main.Parent = gui
+main.Active = true
+main.Draggable = true
 
--- TARGET
-local function getTarget(plr)
-    local char = getCharacter(plr)
-    if not char then return end
-    return char:FindFirstChild(settings.targetPart) or char:FindFirstChild("Head")
-end
+-- TITLE
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundColor3 = Color3.fromRGB(15,15,25)
+title.Text = "MGZ MODS"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.Parent = main
 
--- AIMBOT (simplificado)
-local function updateAimbot()
-    if not settings.aimbot then return end
+-- CONTENT
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1,0,1,-60)
+content.Position = UDim2.new(0,0,0,60)
+content.BackgroundTransparency = 1
+content.Parent = main
 
-    local closest, dist = nil, settings.fovRadius
-
-    for _, plr in pairs(getEnemies()) do
-        local part = getTarget(plr)
-        if part then
-            local pos, visible = camera:WorldToViewportPoint(part.Position)
-            if visible then
-                local mpos = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
-                local d = (Vector2.new(pos.X,pos.Y) - mpos).Magnitude
-
-                if d < dist then
-                    dist = d
-                    closest = part
-                end
-            end
-        end
-    end
-
-    if closest then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
+-- LIMPAR
+local function clear()
+    for _,v in pairs(content:GetChildren()) do
+        v:Destroy()
     end
 end
 
--- ESP OTIMIZADO
-local drawings = {}
-
-local function clearESP()
-    for _, d in pairs(drawings) do
-        pcall(function() d:Remove() end)
-    end
-    drawings = {}
+-- FUNÇÃO CRIAR TEXTO
+local function createLabel(text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1,0,0,30)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(200,200,200)
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 14
+    lbl.Parent = content
 end
 
-local function updateESP()
-    if not settings.esp then
-        clearESP()
-        return
-    end
-
-    clearESP()
-
-    for _, plr in pairs(getEnemies()) do
-        local char = getCharacter(plr)
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local root = char.HumanoidRootPart
-            local pos, vis = camera:WorldToViewportPoint(root.Position)
-
-            if vis then
-                if settings.espName then
-                    local t = Drawing.new("Text")
-                    t.Text = plr.Name
-                    t.Position = Vector2.new(pos.X, pos.Y)
-                    t.Size = 14
-                    t.Center = true
-                    t.Visible = true
-                    table.insert(drawings, t)
-                end
-            end
-        end
-    end
+-- ABAS
+local function createTab(name, posX, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.25,0,0,30)
+    btn.Position = UDim2.new(posX,0,0,30)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,45)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.Parent = main
+    
+    btn.MouseButton1Click:Connect(callback)
 end
 
--- SPEED
-local function updateSpeed()
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid.WalkSpeed = settings.speedEnabled and settings.speedValue or 16
-    end
+-- CONTEÚDOS
+local function showAimbot()
+    clear()
+    createLabel("Aimbot Settings (em breve)")
 end
 
--- INVIS
-local function updateMain()
-    local char = player.Character
-    if char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.Transparency = settings.invisible and 1 or 0
-            end
-        end
-    end
+local function showVisual()
+    clear()
+    createLabel("Visual / ESP (em breve)")
 end
 
--- LOOP
-runService.RenderStepped:Connect(function()
-    pcall(function()
-        updateAimbot()
-        updateESP()
-        updateSpeed()
-        updateMain()
-    end)
-end)
+local function showMisc()
+    clear()
+    createLabel("Misc Settings (em breve)")
+end
+
+local function showMain()
+    clear()
+    createLabel("Main Settings (em breve)")
+end
+
+-- CRIAR ABAS
+createTab("Aimbot", 0, showAimbot)
+createTab("Visual", 0.25, showVisual)
+createTab("Misc", 0.5, showMisc)
+createTab("Main", 0.75, showMain)
+
+-- INICIAL
+showAimbot()
